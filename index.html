@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tugas Reminder Bot - Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+  :root {
+    --bg: #f5f5f0;
+    --card: #ffffff;
+    --border: #e0ded6;
+    --text: #1a1a18;
+    --text-muted: #6b6966;
+    --accent: #185FA5;
+    --accent-light: #E6F1FB;
+    --accent-dark: #0C447C;
+    --green: #3B6D11;
+    --green-bg: #EAF3DE;
+    --amber: #854F0B;
+    --amber-bg: #FAEEDA;
+    --red: #993C1D;
+    --red-bg: #FAECE7;
+    --gray: #5F5E5A;
+    --gray-bg: #F1EFE8;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding: 1.5rem; }
+  .container { max-width: 720px; margin: 0 auto; }
+
+  .header { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 14px; margin-bottom: 1rem; box-shadow: var(--shadow); }
+  .header-icon { width: 46px; height: 46px; border-radius: 50%; background: var(--accent-light); display: flex; align-items: center; justify-content: center; }
+  .header-icon i { font-size: 20px; color: var(--accent); }
+  .header-title { font-size: 18px; font-weight: 600; }
+  .header-sub { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .status-pill { display: flex; align-items: center; gap: 6px; border-radius: 99px; padding: 5px 12px; font-size: 12px; font-weight: 500; transition: all 0.3s; }
+  .status-pill.connected { background: var(--green-bg); color: var(--green); }
+  .status-pill.disconnected { background: var(--red-bg); color: var(--red); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .connected .dot { background: #639922; animation: pulse 2s infinite; }
+  .disconnected .dot { background: var(--red); }
+
+  /* Notif permission button */
+  .notif-toggle { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 99px; border: 1px solid var(--border); background: transparent; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; color: var(--text-muted); transition: all 0.2s; }
+  .notif-toggle.granted { background: var(--accent-light); color: var(--accent); border-color: transparent; }
+  .notif-toggle.denied { background: var(--red-bg); color: var(--red); border-color: transparent; cursor: not-allowed; }
+  .notif-toggle i { font-size: 13px; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1rem; }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 1rem; text-align: center; box-shadow: var(--shadow); }
+  .stat-num { font-size: 28px; font-weight: 600; }
+  .stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+
+  .user-id-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 8px 12px; background: var(--amber-bg); border-radius: var(--radius-sm); font-size: 13px; color: var(--amber); }
+  .user-id-row i { font-size: 14px; flex-shrink: 0; }
+  .user-id-row input { flex:1; border: none; background: transparent; font-size: 13px; color: var(--amber); font-family: monospace; outline: none; min-width: 0; }
+  .user-id-row input::placeholder { color: var(--amber); opacity: 0.6; }
+
+  .form-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .form-row input { flex: 1; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit; color: var(--text); background: var(--bg); outline: none; transition: border-color 0.15s; }
+  .form-row input:focus { border-color: var(--accent); background: #fff; }
+  .form-row input[type="datetime-local"] { flex: 0 0 200px; }
+  .add-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px; border-radius: var(--radius-sm); border: none; background: var(--accent); color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+  .add-btn:hover { background: var(--accent-dark); }
+  .add-btn:disabled { background: #aaa; cursor: not-allowed; }
+
+  .notif { padding: 9px 14px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 8px; display: none; align-items: center; gap: 8px; }
+  .notif i { font-size: 14px; }
+  .notif.success { background: var(--green-bg); color: var(--green); display: flex; }
+  .notif.error { background: var(--red-bg); color: var(--red); display: flex; }
+
+  /* Notif permission banner */
+  .notif-banner { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--accent-light); border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 13px; color: var(--accent); }
+  .notif-banner i { font-size: 16px; flex-shrink: 0; }
+  .notif-banner-text { flex: 1; line-height: 1.5; }
+  .notif-banner-btn { padding: 5px 14px; border-radius: 99px; border: none; background: var(--accent); color: #fff; font-size: 12px; font-weight: 500; cursor: pointer; font-family: inherit; white-space: nowrap; }
+  .notif-banner-btn:hover { background: var(--accent-dark); }
+
+  .filter-row { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+  .filter-btn { font-size: 12px; padding: 5px 14px; border-radius: 99px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .filter-btn.active { background: var(--accent-light); color: var(--accent); border-color: transparent; font-weight: 500; }
+  .filter-btn:hover:not(.active) { background: var(--bg); }
+
+  .task-list { display: flex; flex-direction: column; gap: 8px; }
+  .task-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: var(--shadow); }
+  .task-card:hover { border-color: #bbb; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+  .task-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+  .task-info { flex: 1; min-width: 0; }
+  .task-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .badge { font-size: 11px; padding: 3px 10px; border-radius: 99px; white-space: nowrap; flex-shrink: 0; font-weight: 500; }
+  .badge-urgent { background: var(--red-bg); color: var(--red); }
+  .badge-soon { background: var(--amber-bg); color: var(--amber); }
+  .badge-ok { background: var(--green-bg); color: var(--green); }
+  .badge-done { background: var(--gray-bg); color: var(--gray); }
+  .done-strike { text-decoration: line-through; opacity: 0.6; }
+
+  .loading { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 14px; }
+  .loading i { font-size: 24px; display: block; margin-bottom: 8px; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty { text-align: center; padding: 2.5rem; color: var(--text-muted); font-size: 14px; }
+  .empty i { font-size: 36px; display: block; margin-bottom: 10px; opacity: 0.4; }
+
+  .cmd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .cmd-card { background: var(--bg); border-radius: var(--radius-sm); padding: 12px 14px; border: 1px solid var(--border); }
+  .cmd-code { font-family: 'Courier New', monospace; font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 4px; word-break: break-all; }
+  .cmd-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--card); border-radius: var(--radius); padding: 1.5rem; width: 100%; max-width: 380px; border: 1px solid var(--border); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+  .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+  .modal-info { font-size: 13px; color: var(--text-muted); line-height: 1.8; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .modal-btn { flex: 1; padding: 9px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: transparent; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; color: var(--text-muted); transition: all 0.15s; }
+  .modal-btn:hover { background: var(--bg); }
+  .modal-btn.done { background: var(--green-bg); color: var(--green); border-color: transparent; }
+  .modal-btn.del { background: var(--red-bg); color: var(--red); border-color: transparent; }
+
+  @media (max-width: 600px) {
+    body { padding: 0.75rem; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .stats .stat-card:first-child { grid-column: span 2; }
+    .form-row { flex-direction: column; }
+    .form-row input[type="datetime-local"] { flex: 1; }
+    .cmd-grid { grid-template-columns: 1fr; }
+    .header-sub { display: none; }
+    .notif-toggle span { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-icon"><i class="fa-solid fa-bell"></i></div>
+    <div>
+      <div class="header-title">Tugas Reminder Bot</div>
+      <div class="header-sub">Dashboard manajemen tugas</div>
+    </div>
+    <div class="header-right">
+      <!-- Tombol izin notifikasi -->
+      <button class="notif-toggle" id="notif-perm-btn" onclick="requestNotifPermission()">
+        <i class="fa-solid fa-bell"></i>
+        <span id="notif-perm-text">Aktifkan Notif</span>
+      </button>
+      <div class="status-pill disconnected" id="status-pill">
+        <span class="dot"></span>
+        <span id="status-text">Memuat...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Banner minta izin notifikasi (muncul kalau belum diizinkan) -->
+  <div class="notif-banner" id="notif-banner" style="display:none;">
+    <i class="fa-solid fa-bell-slash"></i>
+    <div class="notif-banner-text">
+      <b>Aktifkan notifikasi browser</b> supaya kamu dapat popup reminder saat deadline tugas mau tiba!
+    </div>
+    <button class="notif-banner-btn" onclick="requestNotifPermission()">Izinkan</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card"><div class="stat-num" id="s-total">-</div><div class="stat-lbl">Total tugas</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-pending">-</div><div class="stat-lbl">Belum selesai</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-urgent">-</div><div class="stat-lbl">Deadline dekat</div></div>
+  </div>
+
+  <!-- Add Task -->
+  <div class="card">
+    <div class="card-title">Tambah tugas baru</div>
+    <div class="user-id-row">
+      <i class="fa-brands fa-telegram"></i>
+      <span>Telegram User ID kamu:</span>
+      <input type="number" id="inp-userid" placeholder="Contoh: 123456789" />
+      <i class="fa-solid fa-circle-info"></i>
+    </div>
+    <div class="form-row">
+      <input type="text" id="inp-name" placeholder="Nama tugas..." />
+      <input type="datetime-local" id="inp-deadline" />
+    </div>
+    <div class="notif" id="notif">
+      <i class="fa-solid fa-circle-check" id="notif-icon"></i>
+      <span id="notif-msg"></span>
+    </div>
+    <button class="add-btn" id="add-btn" onclick="addTask()">
+      <i class="fa-solid fa-plus"></i> Tambah tugas
+    </button>
+  </div>
+
+  <!-- Task List -->
+  <div class="card">
+    <div class="card-title">Daftar tugas</div>
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="setFilter('all',this)">Semua</button>
+      <button class="filter-btn" onclick="setFilter('pending',this)">Aktif</button>
+      <button class="filter-btn" onclick="setFilter('done',this)">Selesai</button>
+    </div>
+    <div class="task-list" id="task-list">
+      <div class="loading"><i class="fa-solid fa-spinner"></i>Menghubungkan ke bot...</div>
+    </div>
+  </div>
+
+  <!-- Commands -->
+  <div class="card">
+    <div class="card-title">Perintah bot di Telegram</div>
+    <div class="cmd-grid">
+      <div class="cmd-card"><div class="cmd-code">/add Nama | YYYY-MM-DD HH:MM</div><div class="cmd-desc">Tambah tugas baru langsung dari Telegram</div></div>
+      <div class="cmd-card"><div class="cmd-code">/list</div><div class="cmd-desc">Lihat semua tugas dan aksi selesai/hapus</div></div>
+      <div class="cmd-card"><div class="cmd-code">/help</div><div class="cmd-desc">Tampilkan bantuan dan daftar perintah</div></div>
+      <div class="cmd-card"><div class="cmd-code">/start</div><div class="cmd-desc">Mulai bot dan lihat panduan penggunaan</div></div>
+    </div>
+  </div>
+
+  <div style="text-align:center; font-size:12px; color: var(--text-muted); padding: 0 0 1.5rem;">
+    Telegram Reminder Bot &mdash; Python + Flask + python-telegram-bot
+  </div>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Detail tugas</div>
+    <div class="modal-info" id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeModal()">Batal</button>
+      <button class="modal-btn done" id="btn-done" onclick="modalDone()">
+        <i class="fa-solid fa-check"></i> Selesai
+      </button>
+      <button class="modal-btn del" onclick="modalDelete()">
+        <i class="fa-solid fa-trash"></i> Hapus
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+let tasks = [];
+let filter = 'all';
+let selectedId = null;
+
+// ── Simpan User ID ke localStorage ────────────────────────────────────────
+const savedUID = localStorage.getItem('tg_user_id');
+if (savedUID) document.getElementById('inp-userid').value = savedUID;
+document.getElementById('inp-userid').addEventListener('change', function() {
+  localStorage.setItem('tg_user_id', this.value);
+});
+
+// ── Notifikasi Browser ─────────────────────────────────────────────────────
+function updateNotifBtn() {
+  const btn = document.getElementById('notif-perm-btn');
+  const txt = document.getElementById('notif-perm-text');
+  const banner = document.getElementById('notif-banner');
+
+  if (!('Notification' in window)) {
+    btn.className = 'notif-toggle denied';
+    txt.textContent = 'Tidak didukung';
+    return;
+  }
+
+  if (Notification.permission === 'granted') {
+    btn.className = 'notif-toggle granted';
+    txt.textContent = 'Notif Aktif';
+    banner.style.display = 'none';
+  } else if (Notification.permission === 'denied') {
+    btn.className = 'notif-toggle denied';
+    txt.textContent = 'Notif Diblokir';
+    banner.style.display = 'none';
+  } else {
+    btn.className = 'notif-toggle';
+    txt.textContent = 'Aktifkan Notif';
+    banner.style.display = 'flex';
+  }
+}
+
+async function requestNotifPermission() {
+  if (!('Notification' in window)) {
+    showNotif('Browser kamu tidak mendukung notifikasi', false);
+    return;
+  }
+  if (Notification.permission === 'denied') {
+    showNotif('Notifikasi diblokir. Buka pengaturan browser untuk mengizinkan.', false);
+    return;
+  }
+  const result = await Notification.requestPermission();
+  updateNotifBtn();
+  if (result === 'granted') {
+    showNotif('Notifikasi berhasil diaktifkan!', true);
+    // Kirim notif test
+    new Notification('Tugas Reminder Bot', {
+      body: 'Notifikasi aktif! Kamu akan dapat reminder saat deadline mau tiba.',
+      icon: 'https://cdn-icons-png.flaticon.com/512/2099/2099085.png'
+    });
+  }
+}
+
+function sendBrowserNotif(title, body, urgent) {
+  if (Notification.permission !== 'granted') return;
+  const notif = new Notification(title, {
+    body: body,
+    icon: 'https://cdn-icons-png.flaticon.com/512/2099/2099085.png',
+    badge: 'https://cdn-icons-png.flaticon.com/512/2099/2099085.png',
+    tag: 'reminder-' + title,
+    requireInteraction: urgent  // popup tetap muncul sampai diklik kalau urgent
+  });
+  notif.onclick = function() {
+    window.focus();
+    notif.close();
+  };
+}
+
+// ── Cek deadline dan kirim notif ───────────────────────────────────────────
+let notifiedIds = new Set(JSON.parse(localStorage.getItem('notified_ids') || '[]'));
+
+function checkDeadlines() {
+  if (Notification.permission !== 'granted') return;
+  const now = Date.now();
+
+  tasks.filter(t => !t.done).forEach(t => {
+    const diff = new Date(t.deadline) - now;
+    const h = diff / 3600000;
+    const key24 = t.id + '_24h';
+    const key1  = t.id + '_1h';
+    const key0  = t.id + '_now';
+
+    // 24 jam sebelum deadline
+    if (diff > 0 && h <= 24 && h > 1 && !notifiedIds.has(key24)) {
+      sendBrowserNotif(
+        '⏰ Deadline besok: ' + t.name,
+        'Deadline ' + fmtDate(t.deadline) + ' — kurang dari 24 jam lagi!',
+        false
+      );
+      notifiedIds.add(key24);
+      saveNotified();
+    }
+
+    // 1 jam sebelum deadline
+    if (diff > 0 && h <= 1 && !notifiedIds.has(key1)) {
+      sendBrowserNotif(
+        '🚨 Deadline 1 jam lagi: ' + t.name,
+        'Segera kerjakan! Deadline ' + fmtDate(t.deadline),
+        true
+      );
+      notifiedIds.add(key1);
+      saveNotified();
+    }
+
+    // Saat deadline terlewat
+    if (diff < 0 && diff > -3600000 && !notifiedIds.has(key0)) {
+      sendBrowserNotif(
+        '❗ Deadline terlewat: ' + t.name,
+        'Deadline sudah lewat sejak ' + fmtDate(t.deadline),
+        true
+      );
+      notifiedIds.add(key0);
+      saveNotified();
+    }
+  });
+}
+
+function saveNotified() {
+  localStorage.setItem('notified_ids', JSON.stringify([...notifiedIds]));
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}) +
+    ', ' + d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+}
+
+function fmtRelative(iso) {
+  const diff = new Date(iso) - Date.now();
+  const abs = Math.abs(diff) / 1000;
+  const m = abs/60, h = m/60, d = h/24;
+  if (diff < 0) return Math.round(d) + ' hari lalu';
+  if (d >= 1) return Math.round(d) + ' hari lagi';
+  if (h >= 1) return Math.round(h) + ' jam lagi';
+  return Math.round(m) + ' menit lagi';
+}
+
+function urgency(task) {
+  if (task.done) return { label:'Selesai', cls:'badge-done', color:'#B4B2A9' };
+  const diff = new Date(task.deadline) - Date.now();
+  const h = diff / 3600000;
+  if (diff < 0) return { label:'Terlewat!', cls:'badge-urgent', color:'#E24B4A' };
+  if (h < 2)   return { label:'Sangat mendesak', cls:'badge-urgent', color:'#D85A30' };
+  if (h < 25)  return { label:'Segera', cls:'badge-soon', color:'#EF9F27' };
+  return { label:'Aman', cls:'badge-ok', color:'#639922' };
+}
+
+function setStatus(ok) {
+  const pill = document.getElementById('status-pill');
+  pill.className = 'status-pill ' + (ok ? 'connected' : 'disconnected');
+  document.getElementById('status-text').textContent = ok ? 'Bot terhubung' : 'Bot tidak terhubung';
+}
+
+function updateStats() {
+  const pending = tasks.filter(t => !t.done);
+  const urgent  = tasks.filter(t => !t.done && (new Date(t.deadline) - Date.now()) < 25*3600*1000 && new Date(t.deadline) > Date.now());
+  document.getElementById('s-total').textContent   = tasks.length;
+  document.getElementById('s-pending').textContent = pending.length;
+  document.getElementById('s-urgent').textContent  = urgent.length;
+}
+
+function render() {
+  updateStats();
+  const list = document.getElementById('task-list');
+  let shown = tasks.filter(t =>
+    filter === 'all' ? true : filter === 'done' ? t.done : !t.done
+  );
+  if (shown.length === 0) {
+    list.innerHTML = '<div class="empty"><i class="fa-regular fa-clipboard"></i>Tidak ada tugas di sini</div>';
+    return;
+  }
+  shown.sort((a,b) => a.done - b.done || new Date(a.deadline) - new Date(b.deadline));
+  list.innerHTML = shown.map(t => {
+    const u = urgency(t);
+    return `<div class="task-card" onclick="openModal(${t.id})">
+      <span class="task-dot" style="background:${u.color}"></span>
+      <div class="task-info">
+        <div class="task-name ${t.done?'done-strike':''}">${esc(t.name)}</div>
+        <div class="task-meta">${fmtDate(t.deadline)} &middot; ${fmtRelative(t.deadline)}</div>
+      </div>
+      <span class="badge ${u.cls}">${u.label}</span>
+    </div>`;
+  }).join('');
+}
+
+async function loadTasks() {
+  try {
+    const res = await fetch(API + '/tasks');
+    if (!res.ok) throw new Error();
+    tasks = await res.json();
+    setStatus(true);
+    render();
+    checkDeadlines();
+  } catch(e) {
+    setStatus(false);
+    document.getElementById('task-list').innerHTML =
+      '<div class="empty"><i class="fa-solid fa-plug-circle-xmark"></i>Tidak bisa terhubung ke bot.<br><small>Pastikan <code>app.py</code> sudah dijalankan.</small></div>';
+  }
+}
+
+async function addTask() {
+  const name    = document.getElementById('inp-name').value.trim();
+  const dl      = document.getElementById('inp-deadline').value;
+  const user_id = parseInt(document.getElementById('inp-userid').value) || 0;
+
+  if (!name || !dl) { showNotif('Isi nama tugas dan deadline dulu!', false); return; }
+  if (!user_id)     { showNotif('Isi Telegram User ID kamu dulu!', false); return; }
+
+  const btn = document.getElementById('add-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+
+  try {
+    const res = await fetch(API + '/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, deadline: dl, user_id })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Gagal menyimpan');
+    showNotif('Tugas "' + name + '" berhasil ditambahkan!', true);
+    document.getElementById('inp-name').value = '';
+    document.getElementById('inp-deadline').value = '';
+    await loadTasks();
+  } catch(e) {
+    showNotif(e.message || 'Gagal menghubungi server.', false);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-plus"></i> Tambah tugas';
+  }
+}
+
+function showNotif(msg, ok) {
+  const nb = document.getElementById('notif');
+  nb.className = 'notif ' + (ok ? 'success' : 'error');
+  document.getElementById('notif-icon').className = ok
+    ? 'fa-solid fa-circle-check'
+    : 'fa-solid fa-circle-exclamation';
+  document.getElementById('notif-msg').textContent = msg;
+  setTimeout(() => { nb.style.display = 'none'; }, 4000);
+}
+
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+function openModal(id) {
+  selectedId = id;
+  const t = tasks.find(x => x.id === id);
+  const u = urgency(t);
+  document.getElementById('modal-title').textContent = t.name;
+  document.getElementById('modal-body').innerHTML =
+    '<b>Deadline:</b> ' + fmtDate(t.deadline) + '<br>' +
+    '<b>Sisa waktu:</b> ' + fmtRelative(t.deadline) + '<br>' +
+    '<b>User ID:</b> ' + t.user_id + '<br>' +
+    '<b>Status:</b> <span class="badge ' + u.cls + '" style="display:inline;vertical-align:middle;">' + u.label + '</span>';
+  document.getElementById('btn-done').style.display = t.done ? 'none' : '';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); selectedId = null; }
+
+async function modalDone() {
+  try {
+    await fetch(API + '/tasks/' + selectedId + '/done', { method: 'POST' });
+    closeModal(); await loadTasks();
+  } catch(e) { showNotif('Gagal memperbarui tugas', false); }
+}
+
+async function modalDelete() {
+  try {
+    await fetch(API + '/tasks/' + selectedId, { method: 'DELETE' });
+    closeModal(); await loadTasks();
+  } catch(e) { showNotif('Gagal menghapus tugas', false); }
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+updateNotifBtn();
+loadTasks();
+// Refresh data & cek deadline setiap 1 menit
+setInterval(loadTasks, 60000);
+// Cek deadline setiap 5 menit (tanpa reload data)
+setInterval(checkDeadlines, 5 * 60 * 1000);
+</script>
+</body>
+</html>
